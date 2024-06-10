@@ -2,16 +2,41 @@ const { ChuongTrinhHoc } = require('~/models/chuongtrinhhoc')
 const { MonHoc } = require('~/models/monhoc')
 
 exports.createNewProgram = async (req, res, next) => {
-    const { nganhHoc, khoa, hocKi, tenMonHoc } = req.body
+    const { nganhhoc, khoa, hocky, tenmonhoc } = req.body
+
+    let hocKy = 0
+    switch (hocky) {
+    case 'Học kỳ 1': {
+        hocKy = 1
+        break
+    }
+    case 'Học kỳ 2': {
+        hocKy = 2
+        break
+    }
+    default: {
+        hocKy = 3
+        break
+    }
+    }
+
     try {
-        const subject = await MonHoc.findOne({ where: { tenMonHoc } })
-        const newProgram = await ChuongTrinhHoc.create({
-            nganhHoc,
-            khoa,
-            hocKi,
+        let subject = await MonHoc.findOne({ where: { tenmonhoc } })
+        await ChuongTrinhHoc.create({
+            nganhHoc: nganhhoc,
+            khoa: khoa,
+            hocKi: Number.parseInt(hocKy),
             maMonHoc: subject.maMonHoc
         })
-        res.status(200).json(newProgram)
+        const result = []
+        const allPrograms = await ChuongTrinhHoc.findAll({})
+        for (let i = 0; i < allPrograms.length; i++) {
+            subject = await MonHoc.findOne({ where: { maMonHoc: allPrograms[i].dataValues.maMonHoc } })
+
+            allPrograms[i].dataValues['tenMonHoc'] = subject.tenMonHoc
+            result.push(allPrograms[i])
+        }
+        if (result) return res.status(201).json(result)
     } catch (err) {
         next(err)
     }
@@ -20,7 +45,20 @@ exports.createNewProgram = async (req, res, next) => {
 exports.getAllPrograms = async (req, res, next) => {
     try {
         const allPrograms = await ChuongTrinhHoc.findAll()
-        res.status(200).json(allPrograms)
+        const newData = []
+        for (let i = 0; i < allPrograms.length; i++) {
+            const subject = await MonHoc.findOne({ where: { maMonHoc: allPrograms[i].maMonHoc } })
+            newData.push({
+                id: allPrograms[i].id,
+                nganhHoc: allPrograms[i].nganhHoc,
+                khoa: allPrograms[i].khoa,
+                hocKi: allPrograms[i].hocKi,
+                tenMonHoc: subject.tenMonHoc,
+                createdAt: allPrograms[i].createdAt,
+                updatedAt: allPrograms[i].updatedAt
+            })
+        }
+        if (newData) res.status(200).json(newData)
     } catch (err) {
         next(err)
     }

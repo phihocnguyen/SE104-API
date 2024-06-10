@@ -31,6 +31,10 @@ const SinhVien = sequelize.define('sinhvien', {
     nganhHoc: {
         type: Sequelize.STRING,
         allowNull: false
+    },
+    soTienDangCo: {
+        type: Sequelize.INTEGER,
+        allowNull: false
     }
 })
 

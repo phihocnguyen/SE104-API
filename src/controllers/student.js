@@ -4,26 +4,28 @@ const bcrypt = require('bcrypt')
 exports.createNewStudent = async (req, res, next) => {
     const salt = bcrypt.genSaltSync(10)
 
-    const { hoTen, ngaySinh, gioiTinh, queQuan, doiTuong, nganhHoc } = req.body
-
+    const { hovaten, ngaysinh, huyen, quan, nganhhoc, gioitinh } = req.body
+    const queQuan = `${quan}, ${huyen}`
     try {
         const mssv = `2252${Math.floor(Math.random() * (9999-1000) + 1000)}`
         const newUser = await TaiKhoan.create({
             taiKhoan: mssv,
             matKhau: bcrypt.hashSync(mssv, salt),
-            role: 1
+            role: 0
         })
-        const newStudent = await SinhVien.create({
+        await SinhVien.create({
             mssv,
-            hoTen,
-            ngaySinh,
-            gioiTinh,
-            queQuan,
-            doiTuong,
-            nganhHoc,
+            hoTen: hovaten,
+            ngaySinh: ngaysinh,
+            gioiTinh: gioitinh,
+            queQuan: queQuan,
+            doiTuong: 1,
+            nganhHoc: nganhhoc,
+            soTienDangCo: 0,
             IDtaiKhoan: newUser.id
         })
-        res.status(201).json(newStudent)
+        const allStudents = await SinhVien.findAll()
+        if (allStudents) res.status(201).json(allStudents)
     } catch (err) {
         next(err)
     }
@@ -70,8 +72,27 @@ exports.deleteStudent = async (req, res, next) => {
 
 exports.getAllStudents = async (req, res, next) => {
     try {
-        const allStudents = await SinhVien.findAll()
+        const allStudents = await SinhVien.findAll({ order: [['createdAt', 'ASC']] })
         res.status(200).json(allStudents)
+    } catch (err) {
+        next(err)
+    }
+}
+
+exports.getStudentByMssv = async (req, res, next) => {
+    try {
+        const student = await SinhVien.findOne( { where: { mssv: req.params.mssv } } )
+        if (student) res.status(200).json(student)
+    } catch (err) {
+        next(err)
+    }
+}
+
+exports.updateSTDC = async (req, res, next) => {
+    try {
+        const { mssv, stdc } = req.params
+        const result = await SinhVien.update( { soTienDangCo: stdc }, { where: { mssv } } )
+        if (result) res.status(200).json(result)
     } catch (err) {
         next(err)
     }
